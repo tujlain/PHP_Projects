@@ -56,19 +56,62 @@
     // Function to prompt for missing options
     function promptForOption($option, $prompt) {
         global $command_options_to_prompt;
-        if (!isset($command_options_to_prompt[$option])) {
+
+        if (!getDbInfo($option))
+        {
             echo "Enter $prompt: ";
             $command_options_to_prompt[$option] = trim(fgets(STDIN));
             writeDBInfo($option, $command_options_to_prompt);
-            // Save the entered option to a file
         }
+        // if (!isset($command_options_to_prompt[$option])) {
+        //     echo "Enter $prompt: ";
+        //     $command_options_to_prompt[$option] = trim(fgets(STDIN));
+        //     writeDBInfo($option, $command_options_to_prompt);
+        //     // Save the entered option to a file
+        // }
     }
 
     function writeDBInfo($option, $command_options_to_prompt)
     {
-        file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
+        // $db_details = parse_ini_file(DB_DETAILS_FILE);
+        // file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
+
+        $db_details = parse_ini_file(DB_DETAILS_FILE);
+
+        // Update option value if it exists, otherwise append the option
+        if (isset($command_options_to_prompt[$option])) {
+            $db_details[$option] = $command_options_to_prompt[$option];
+        } else {
+            // Append the option to the database details array
+            $db_details[$option] = '';
+        }
+
+        // Construct content to write
+        $content = '';
+        foreach ($db_details as $opt => $value) {
+            $content .= "$opt=$value\n";
+        }
+
+        // Write content to file
+        file_put_contents(DB_DETAILS_FILE, $content);
+        
     }
     
+    function getDbInfo($option)
+    {
+        $db_details = parse_ini_file(DB_DETAILS_FILE);
+
+        // Update option value if it exists, otherwise append the option
+        if (isset($db_details[$option]))
+        {
+            return 1;
+        }
+         else {
+            return 0;
+        }
+    }
+
+
     while (True){
     // Check if db details file exists
     // if (file_exists(DB_DETAILS_FILE)) {
@@ -90,8 +133,7 @@
             // file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
              
             try{
-                $db_details = parse_ini_file(DB_DETAILS_FILE);
-                writeDBInfo($option, $command_options_to_prompt[$option]);
+                writeDBInfo($option, $command_options_to_prompt);
                 exit;
                 // if (filesize($DB_DETAILS_FILE) > 0)
                 // {
