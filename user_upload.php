@@ -2,7 +2,6 @@
 
 
     $command_options_to_prompt = getopt("u:p:h:", ["file:", "create_table", "dry_run", "help"]);
-
     //  // Array of the command line options prompted to the user for the database
     //  $db_command_options_to_prompt = [
     //     'u' => 'MySQL username',
@@ -60,29 +59,58 @@
         if (!isset($command_options_to_prompt[$option])) {
             echo "Enter $prompt: ";
             $command_options_to_prompt[$option] = trim(fgets(STDIN));
+            writeDBInfo($option, $command_options_to_prompt);
             // Save the entered option to a file
-            file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
         }
     }
 
+    function writeDBInfo($option, $command_options_to_prompt)
+    {
+        file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
+    }
+    
     while (True){
     // Check if db details file exists
-    if (file_exists(DB_DETAILS_FILE)) {
-        // Read db details from the file
-        $db_details = parse_ini_file(DB_DETAILS_FILE);
-        foreach ($db_details as $option => $value) {
-            // Override options with saved values
-            $command_options_to_prompt[$option] = $value;
-        }
-    }
+    // if (file_exists(DB_DETAILS_FILE)) {
+    //     // Read db details from the file
+    //     $db_details = parse_ini_file(DB_DETAILS_FILE);
+    //     foreach ($db_details as $option => $value) {
+    //         // Override options with saved values
+    //         $command_options_to_prompt[$option] = $value;
+    //     }
+    // }
 
     // Check if database options are set through command-line arguments
     foreach ($db_command_options_to_prompt as $option => $prompt) {
         if (isset($command_options_to_prompt[$option])) {
             // Set the option value directly from command-line argument
-            $command_options_to_prompt[$option] = trim(fgets(STDIN));
+            // $command_options_to_prompt[$option] = trim(fgets(STDIN));
             // Save the entered option to a file
-            file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
+            echo $command_options_to_prompt[$option];
+            // file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
+             
+            try{
+                $db_details = parse_ini_file(DB_DETAILS_FILE);
+                writeDBInfo($option, $command_options_to_prompt[$option]);
+                exit;
+                // if (filesize($DB_DETAILS_FILE) > 0)
+                // {
+                //     
+                //     foreach ($db_details as $option => $value) {
+                //         // Override options with saved values
+                //         $command_options_to_prompt[$option] = $value;
+                //         echo $command_options_to_prompt[$option];
+                //         echo $option;
+                //         }
+                //     exit;
+                // }
+
+            }
+            catch (Exception $e)
+            {
+                echo $e;
+            }
+            
         }
     }
 
@@ -100,6 +128,9 @@
     $response = trim(fgets(STDIN));
     if ($response !== 'yes') {
         break; // Exit the loop if the user doesn't want to continue
+    }
+    else{
+        continue;
     }
 
 } // While loop closing
