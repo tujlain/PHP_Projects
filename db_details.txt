@@ -1,3 +1,3 @@
-p=pli
-u=username
-h=host
+p=mysql
+u=root
+h=localhost

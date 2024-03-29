@@ -1,15 +1,14 @@
 <?php
 
-
+    define('DB_DETAILS_FILE', getcwd() . '\db_details.txt');
     $command_options_to_prompt = getopt("u:p:h:", ["file:", "create_table", "dry_run", "help"]);
-    //  // Array of the command line options prompted to the user for the database
-    //  $db_command_options_to_prompt = [
-    //     'u' => 'MySQL username',
-    //     'p' => 'MySQL password',
-    //     'h' => 'MySQL host',
-    //     'port' => 'MySQL port number',
 
-    // ];
+    // Array of database options to prompt for
+    $db_command_options_to_prompt = [
+        'u' => 'MySQL username',
+        'p' => 'MySQL password',
+        'h' => 'MySQL host',
+    ];
 
     if (isset($command_options_to_prompt['help'])) {
         echo "Usage: php user_upload.php [--file=filename] [--create_table] [--dry_run] [-u username] [-p password] [-h host] [--help]\n";
@@ -24,58 +23,19 @@
         exit(0);
     }
 
-    // // To check if db values are set or not.
-    // foreach ($db_command_options_to_prompt as $option => $prompt) {
-    //     if (isset($command_options_to_prompt[$option])) {
-    //         $command_options_to_prompt[$option] = trim(fgets(STDIN));
-    //     }
-    // }
-
-    // // To check if create table is set and check for all db values set or not
-    // if (isset($command_options_to_prompt['create_table']))
-    // {
-    //     // Loop through the options and prompt the user if they are not set
-    //     foreach ($db_command_options_to_prompt as $option => $prompt) {
-    //         if (!isset($command_options_to_prompt[$option])) {
-    //             echo "Enter $prompt: ";
-    //             $command_options_to_prompt[$option] = trim(fgets(STDIN));
-    //         }
-    //     }
-    // }
-
-
-    define('DB_DETAILS_FILE', getcwd() . '\db_details.txt');
-
-    // Array of database options to prompt for
-    $db_command_options_to_prompt = [
-        'u' => 'MySQL username',
-        'p' => 'MySQL password',
-        'h' => 'MySQL host',
-    ];
-
-    // Function to prompt for missing options
+    // Function to prompt for missing db options
     function promptForOption($option, $prompt) {
         global $command_options_to_prompt;
-
         if (!getDbInfo($option))
         {
             echo "Enter $prompt: ";
             $command_options_to_prompt[$option] = trim(fgets(STDIN));
             writeDBInfo($option, $command_options_to_prompt);
         }
-        // if (!isset($command_options_to_prompt[$option])) {
-        //     echo "Enter $prompt: ";
-        //     $command_options_to_prompt[$option] = trim(fgets(STDIN));
-        //     writeDBInfo($option, $command_options_to_prompt);
-        //     // Save the entered option to a file
-        // }
     }
 
     function writeDBInfo($option, $command_options_to_prompt)
     {
-        // $db_details = parse_ini_file(DB_DETAILS_FILE);
-        // file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
-
         $db_details = parse_ini_file(DB_DETAILS_FILE);
 
         // Update option value if it exists, otherwise append the option
@@ -88,8 +48,8 @@
 
         // Construct content to write
         $content = '';
-        foreach ($db_details as $opt => $value) {
-            $content .= "$opt=$value\n";
+        foreach ($db_details as $db_detail => $value) {
+            $content .= "$db_detail=$value\n";
         }
 
         // Write content to file
@@ -112,16 +72,63 @@
     }
 
 
+        // Function to establish a database connection
+        function connectToDatabase($host, $username, $password, $database) {
+            // Create connection
+            $dbconnection = new mysqli($host, $username, $password);
+
+            // Check connection
+            if ($dbconnection->connect_error) {
+                die("Connection failed: " . $dbconnection->connect_error);
+            }
+
+            // Create database if it doesn't exist
+            $sql = "CREATE DATABASE IF NOT EXISTS $database";
+            if ($dbconnection->query($sql) === TRUE) {
+                echo "Database created successfully or already exists\n";
+            } else {
+                echo "Error creating database: " . $dbconnection->error;
+            }
+
+            // Close connection
+            $dbconnection->close();
+
+            // Reconnect with the specified database
+            $conn = new mysqli($host, $username, $password, $database);
+
+            // Check connection
+            if ($conn->connect_error) {
+                die("Connection failed: " . $conn->connect_error);
+            }
+
+            return $conn;
+        }
+
+    function connectToSql($db_details)
+    {
+        $username = $db_details['u'];
+        $password = $db_details['p'];
+        $host = $db_details['h'];
+        $database = "tarudb";
+        try{
+
+            $sqlconnection = connectToDatabase($host, $username, $password, $database);
+            if ($sqlconnection instanceof mysqli) {
+                echo "Connected successfully to database: $database\n";
+            } else {
+                echo "Connection failed: Unexpected error";
+            }
+        }
+
+        catch (Exception $e)
+        {
+            echo $e;
+        }
+    }
+
+
+
     while (True){
-    // Check if db details file exists
-    // if (file_exists(DB_DETAILS_FILE)) {
-    //     // Read db details from the file
-    //     $db_details = parse_ini_file(DB_DETAILS_FILE);
-    //     foreach ($db_details as $option => $value) {
-    //         // Override options with saved values
-    //         $command_options_to_prompt[$option] = $value;
-    //     }
-    // }
 
     // Check if database options are set through command-line arguments
     foreach ($db_command_options_to_prompt as $option => $prompt) {
@@ -135,18 +142,6 @@
             try{
                 writeDBInfo($option, $command_options_to_prompt);
                 exit;
-                // if (filesize($DB_DETAILS_FILE) > 0)
-                // {
-                //     
-                //     foreach ($db_details as $option => $value) {
-                //         // Override options with saved values
-                //         $command_options_to_prompt[$option] = $value;
-                //         echo $command_options_to_prompt[$option];
-                //         echo $option;
-                //         }
-                //     exit;
-                // }
-
             }
             catch (Exception $e)
             {
@@ -156,15 +151,14 @@
         }
     }
 
-    // Prompt for missing database options if create_table is set
+    // Prompt for creating table
     if (isset($command_options_to_prompt['create_table'])) {
         foreach ($db_command_options_to_prompt as $option => $prompt) {
             promptForOption($option, $prompt);
         }
+            $db_details = parse_ini_file(DB_DETAILS_FILE);
+            connectToSql($db_details);
     }
-
-
-
 
     echo "Do you wish to continue? (yes/no): ";
     $response = trim(fgets(STDIN));
