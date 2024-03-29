@@ -44,24 +44,26 @@
                         'name' => $name,
                         'surname' => $surname,
                         'email' => $email,
-                        'error' => "Invalid email format for user {$row[2]}. Skipped insert into table."
+                        'error' => "Invalid email format for user {$row[2]}. Skipped insert into table.",
+                        'message' => "Invalid Data"
                     );
                 }
                 
                 else $processed_data[] = array(
                     'name' => $name,
                     'surname' => $surname,
-                    'email' => $email
+                    'email' => $email,
+                    'message' => "Valid Data"
                 );
            }
-            echo "Processed Data:\n";
-            echo "-------------------------------------------------------\n";
-            echo "| Name       | Surname      | Email                   |\n";
-            echo "-------------------------------------------------------\n";
+            echo "Table below displays all rows processed. Invalid rows will not be inserted into the database.\n";
+            echo "----------------------------------------------------------------------\n";
+            echo "| Name       | Surname    | Email                     |  Message     |\n";
+            echo "----------------------------------------------------------------------\n";
             foreach ($processed_data as $row) {
-                printf("| %-6s | %-7s | %-25s |\n", str_pad($row['name'], 10), str_pad($row['surname'], 10), str_pad(trim($row['email']), 10));
+                printf("| %-6s | %-7s | %-25s | %-12s |\n", str_pad($row['name'], 10), str_pad($row['surname'], 10), str_pad(trim($row['email']), 10), str_pad($row['message'],10));
             }
-            echo "-------------------------------------------------------\n";
+            echo "----------------------------------------------------------------------\n";
            return $processed_data;
         }
        catch (Exception $e)
@@ -72,9 +74,15 @@
 
     function insertIntoTable($processed_data,$connection)
     {
+        echo "Database Operation Results:\n";
+        echo "---------------------------------------------\n";
+        echo "| Status         | Email                    |\n";
+        echo "---------------------------------------------\n";
+        
         foreach ($processed_data as $data) {
             if (isset($data['error'])) {
-                echo $data['error'] . "\n";
+                // echo $data['error'] . "\n";
+                printf("| %-15s| %-25s|\n", "Not Inserted", str_pad($data['email'],10));
                 continue;
             } else {
                 $sql = "INSERT INTO users (name, surname, email) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), surname = VALUES(surname)";
@@ -82,13 +90,22 @@
                 $sql_statement = $connection->prepare($sql);
                 $sql_statement->bind_param("sss", $data['name'], $data['surname'], $data['email']);
 
-                if ($sql_statement->execute()) {
-                    echo "Record inserted successfully for user {$data['email']}\n";
-                } else {
-                    echo "Error: Database insertion failed for user {$data['email']}. Error: " . $sql_statement->error . "\n";
+
+            //     if ($sql_statement->execute()) {
+            //         echo "Record inserted successfully for user {$data['email']}\n";
+            //     } else {
+            //         echo "Error: Database insertion failed for user {$data['email']}. Error: " . $sql_statement->error . "\n";
+            // }
+                    if ($sql_statement->execute()) {
+                        printf("| %-15s| %-25s|\n", "Inserted", str_pad($data['email'], 20));
+                    } else {
+                        printf("| %-15s| %-20s|\n", "Not Inserted", $data['email'] . " (" . $sql_statement->error . ")");
+                    }
+                    
             }
-            }
+            
         }   
+        echo "----------------------------------------------\n";
     }
 
 
