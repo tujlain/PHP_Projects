@@ -23,6 +23,41 @@
         exit(0);
     }
 
+    if (isset($command_options_to_prompt['file'])) {
+        $file_path = getcwd(). '\\'. $command_options_to_prompt['file'];
+        if (file_exists($file_path))
+        {
+            // Read the file
+            try{
+                $file_contents = file_get_contents($file_path);
+                if (isset($command_options_to_prompt['dry_run'])) {
+                    echo "Dry run mode: Database won't be altered.\n";
+                    processFileData($file_contents);
+                } else {
+                    processFileData($file_contents);
+                    // Insert data into the database (if not in dry run mode)
+                    echo "Inserting data into the database...\n";
+                    // Your database insertion code goes here...
+                }
+            }
+            catch (Exception $e)
+            {
+                echo 'There was an error in reading the file: '.$e; 
+            }
+            
+        }
+        else{
+            echo "This file does not exist in the current directory. Try Again!";
+            exit;
+        }
+
+    }
+
+    function processFileData($file_contents)
+    {
+        echo 'processing data';
+    }
+
     // Function to prompt for missing db options
     function promptForOption($option, $prompt) {
         global $command_options_to_prompt;
@@ -72,7 +107,7 @@
     }
 
 
-        // Function to establish a database connection
+        // Function to establish the database connection
         function connectToDatabase($host, $username, $password, $database) {
             // Create connection
             $dbconnection = new mysqli($host, $username, $password);
@@ -110,13 +145,28 @@
         $password = $db_details['p'];
         $host = $db_details['h'];
         $database = "tarudb";
-        try{
+        $sql = " CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(50) NOT NULL,
+                surname VARCHAR(50) NOT NULL,
+                email VARCHAR(100) NOT NULL UNIQUE
+            )";
 
+        try{
             $sqlconnection = connectToDatabase($host, $username, $password, $database);
             if ($sqlconnection instanceof mysqli) {
                 echo "Connected successfully to database: $database\n";
+
+                echo "Creating Table if it does not exist: ";
+
+                // Execute the query to create/update table
+                if ($sqlconnection->query($sql) === TRUE) {
+                    echo "Table created.\n";
+                } else {
+                    echo "Error creating table: " . $sqlconnection->error;
+                }
             } else {
-                echo "Connection failed: Unexpected error";
+                echo "Connection failed";
             }
         }
 
