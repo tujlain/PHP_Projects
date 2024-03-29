@@ -10,54 +10,6 @@
         'h' => 'MySQL host',
     ];
 
-    if (isset($command_options_to_prompt['help'])) {
-        echo "Usage: php user_upload.php [--file=filename] [--create_table] [--dry_run] [-u username] [-p password] [-h host] [--help]\n";
-        echo "Options:\n";
-        echo "  --file=filename   Specify the CSV file to be parsed\n";
-        echo "  --create_table    Build the MySQL users table and exit\n";
-        echo "  --dry_run         Run the script without altering the database\n";
-        echo "  -u                MySQL username\n";
-        echo "  -p                MySQL password\n";
-        echo "  -h                MySQL host\n";
-        echo "  --help            Display this help message\n";
-        exit(0);
-    }
-
-    // Function to update the file info into the users table
-    if (isset($command_options_to_prompt['file'])) {
-        $file_path = getcwd(). '\\'. $command_options_to_prompt['file'];
-        if (file_exists($file_path))
-        {
-            // Read the file
-            try{
-                $file_contents = file_get_contents($file_path);
-                if (isset($command_options_to_prompt['dry_run'])) {
-                    echo "Dry run mode: Database won't be altered.\n";
-                    $processed_data = processFileData($file_contents);
-                } 
-                else 
-                {
-                    $processed_data = processFileData($file_contents);
-                    $db_details = parse_ini_file(DB_DETAILS_FILE);
-                    $connection = connectToSql($db_details);
-                    // Insert data into the database (if not in dry run mode)
-                    echo "Inserting data into the database...\n";
-                    insertIntoTable($processed_data,$connection);
-                }
-            }
-            catch (Exception $e)
-            {
-                echo 'There was an error in reading the file: '.$e; 
-            }
-            
-        }
-        else{
-            echo "This file does not exist in the current directory. Try Again!";
-            exit;
-        }
-
-    }
-
     function validateEmail($email) {
         return filter_var($email, FILTER_VALIDATE_EMAIL);
     }
@@ -81,9 +33,9 @@
                 }
 
                 // Capitalize name and surname
-                $name = capitalize($row[0]);
-                $surname = capitalize($row[1]);
-                $email = strtolower($row[2]); // Convert email to lowercase
+                $name = trim(capitalize($row[0]));
+                $surname = trim(capitalize($row[1]));
+                $email = trim(strtolower($row[2])); // Convert email to lowercase
                 
                 // Validate the email address
                 if (!validateEmail($email)) {
@@ -92,16 +44,24 @@
                         'name' => $name,
                         'surname' => $surname,
                         'email' => $email,
-                        'error' => "Invalid email format for user {$row[2]}. Wont be inserted into table."
+                        'error' => "Invalid email format for user {$row[2]}. Skipped insert into table."
                     );
                 }
-    
+                
                 else $processed_data[] = array(
                     'name' => $name,
                     'surname' => $surname,
                     'email' => $email
                 );
            }
+            echo "Processed Data:\n";
+            echo "-------------------------------------------------------\n";
+            echo "| Name       | Surname      | Email                   |\n";
+            echo "-------------------------------------------------------\n";
+            foreach ($processed_data as $row) {
+                printf("| %-6s | %-7s | %-25s |\n", str_pad($row['name'], 10), str_pad($row['surname'], 10), str_pad(trim($row['email']), 10));
+            }
+            echo "-------------------------------------------------------\n";
            return $processed_data;
         }
        catch (Exception $e)
@@ -115,14 +75,18 @@
         foreach ($processed_data as $data) {
             if (isset($data['error'])) {
                 echo $data['error'] . "\n";
+                continue;
             } else {
-                // Insert data into the database
-                $sql = "INSERT INTO users (name, surname, email) VALUES ('{$data['name']}', '{$data['surname']}', '{$data['email']}')";
-                if ($connection->query($sql) !== TRUE) {
-                    echo "Error: Database insertion failed for user {$data['email']}. Error: " . $connection->error . "\n";
-                } else {
+                $sql = "INSERT INTO users (name, surname, email) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), surname = VALUES(surname)";
+                // Prepare the statement
+                $sql_statement = $connection->prepare($sql);
+                $sql_statement->bind_param("sss", $data['name'], $data['surname'], $data['email']);
+
+                if ($sql_statement->execute()) {
                     echo "Record inserted successfully for user {$data['email']}\n";
-                }
+                } else {
+                    echo "Error: Database insertion failed for user {$data['email']}. Error: " . $sql_statement->error . "\n";
+            }
             }
         }   
     }
@@ -137,6 +101,16 @@
             $command_options_to_prompt[$option] = trim(fgets(STDIN));
             writeDBInfo($option, $command_options_to_prompt);
         }
+    }
+
+    function checkDbValuesAndConnect($db_command_options_to_prompt)
+    {
+        foreach ($db_command_options_to_prompt as $option => $prompt) {
+            promptForOption($option, $prompt);
+        }
+        $db_details = parse_ini_file(DB_DETAILS_FILE);
+        $connection = connectToSql($db_details);
+        return $connection;
     }
 
     function writeDBInfo($option, $command_options_to_prompt)
@@ -246,19 +220,27 @@
         }
     }
 
-
-
     while (True){
+
+    if (isset($command_options_to_prompt['help'])) {
+        echo "Usage: php user_upload.php [--file=filename] [--create_table] [--dry_run] [-u username] [-p password] [-h host] [--help]\n";
+        echo "Options:\n";
+        echo "  --file=filename   Specify the CSV file to be parsed\n";
+        echo "  --create_table    Build the MySQL users table and exit\n";
+        echo "  --dry_run         Run the script without altering the database\n";
+        echo "  -u                MySQL username\n";
+        echo "  -p                MySQL password\n";
+        echo "  -h                MySQL host\n";
+        echo "  --help            Display this help message\n";
+        exit(0);
+    }
 
     // Check if database options are set through command-line arguments
     foreach ($db_command_options_to_prompt as $option => $prompt) {
         if (isset($command_options_to_prompt[$option])) {
             // Set the option value directly from command-line argument
-            // $command_options_to_prompt[$option] = trim(fgets(STDIN));
             // Save the entered option to a file
-            echo $command_options_to_prompt[$option];
-            // file_put_contents(DB_DETAILS_FILE, "$option={$command_options_to_prompt[$option]}\n", FILE_APPEND);
-             
+            echo $command_options_to_prompt[$option];             
             try{
                 writeDBInfo($option, $command_options_to_prompt);
                 exit;
@@ -271,23 +253,47 @@
         }
     }
 
-    // Prompt for creating table
-    if (isset($command_options_to_prompt['create_table'])) {
-        foreach ($db_command_options_to_prompt as $option => $prompt) {
-            promptForOption($option, $prompt);
+      // Function to update the file info into the users table
+      // Prompt for --file
+      if (isset($command_options_to_prompt['file'])) {
+        $file_path = getcwd(). '\\'. $command_options_to_prompt['file'];
+        if (file_exists($file_path))
+        {
+            // Read the file
+            try{
+                $file_contents = file_get_contents($file_path);
+                if (isset($command_options_to_prompt['dry_run'])) {
+                    echo "Dry run mode: Database won't be altered.\n";
+                    $processed_data = processFileData($file_contents);
+                } 
+                else 
+                {
+                    $processed_data = processFileData($file_contents);
+                    $connection = checkDbValuesAndConnect($db_command_options_to_prompt);
+                    // Insert data into the database (if not in dry run mode)
+                    echo "Inserting data into the database...\n";
+                    insertIntoTable($processed_data,$connection);
+                }
+            }
+            catch (Exception $e)
+            {
+                echo 'There was an error in reading the file: '.$e; 
+            }
+            
         }
-            $db_details = parse_ini_file(DB_DETAILS_FILE);
-            $connection = connectToSql($db_details);
+        else{
+            echo "This file does not exist in the current directory. Try Again!";
+            exit;
+        }
+
     }
 
-    echo "Do you wish to continue? (yes/no): ";
-    $response = trim(fgets(STDIN));
-    if ($response !== 'yes') {
-        break; // Exit the loop if the user doesn't want to continue
+    // Prompt for creating table
+    if (isset($command_options_to_prompt['create_table'])) {
+        checkDbValuesAndConnect($command_options_to_prompt);
     }
-    else{
-        continue;
-    }
+
+    exit;
 
 } // While loop closing
 
