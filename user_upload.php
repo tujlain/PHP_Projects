@@ -23,6 +23,7 @@
         exit(0);
     }
 
+    // Function to update the file info into the users table
     if (isset($command_options_to_prompt['file'])) {
         $file_path = getcwd(). '\\'. $command_options_to_prompt['file'];
         if (file_exists($file_path))
@@ -32,12 +33,16 @@
                 $file_contents = file_get_contents($file_path);
                 if (isset($command_options_to_prompt['dry_run'])) {
                     echo "Dry run mode: Database won't be altered.\n";
-                    processFileData($file_contents);
-                } else {
-                    processFileData($file_contents);
+                    $processed_data = processFileData($file_contents);
+                } 
+                else 
+                {
+                    $processed_data = processFileData($file_contents);
+                    $db_details = parse_ini_file(DB_DETAILS_FILE);
+                    $connection = connectToSql($db_details);
                     // Insert data into the database (if not in dry run mode)
                     echo "Inserting data into the database...\n";
-                    // Your database insertion code goes here...
+                    insertIntoTable($processed_data,$connection);
                 }
             }
             catch (Exception $e)
@@ -53,10 +58,75 @@
 
     }
 
+    function validateEmail($email) {
+        return filter_var($email, FILTER_VALIDATE_EMAIL);
+    }
+
+    function capitalize($str) {
+        return ucfirst(strtolower($str));
+    }
+
     function processFileData($file_contents)
     {
-        echo 'processing data';
+        echo "Processing the File Data before insert\n";
+        try{
+            $row_data = array_map('str_getcsv', explode("\n", $file_contents));
+            $csv_header = array_shift($row_data); // Removing the first row i.e, header
+            $processed_data = array(); // Initialize an array to collect processed data
+
+            foreach ($row_data as $row) {
+                
+                if (count($row) < 3) { //If row elements are less than 3
+                    continue; // Skip this row and move to the next one
+                }
+
+                // Capitalize name and surname
+                $name = capitalize($row[0]);
+                $surname = capitalize($row[1]);
+                $email = strtolower($row[2]); // Convert email to lowercase
+                
+                // Validate the email address
+                if (!validateEmail($email)) {
+                    echo "Invalid email format for user {$row[2]}. Wont be inserted into table.\n";
+                    $processed_data[] = array(
+                        'name' => $name,
+                        'surname' => $surname,
+                        'email' => $email,
+                        'error' => "Invalid email format for user {$row[2]}. Wont be inserted into table."
+                    );
+                }
+    
+                else $processed_data[] = array(
+                    'name' => $name,
+                    'surname' => $surname,
+                    'email' => $email
+                );
+           }
+           return $processed_data;
+        }
+       catch (Exception $e)
+       {
+        echo $e;
+       }
     }
+
+    function insertIntoTable($processed_data,$connection)
+    {
+        foreach ($processed_data as $data) {
+            if (isset($data['error'])) {
+                echo $data['error'] . "\n";
+            } else {
+                // Insert data into the database
+                $sql = "INSERT INTO users (name, surname, email) VALUES ('{$data['name']}', '{$data['surname']}', '{$data['email']}')";
+                if ($connection->query($sql) !== TRUE) {
+                    echo "Error: Database insertion failed for user {$data['email']}. Error: " . $connection->error . "\n";
+                } else {
+                    echo "Record inserted successfully for user {$data['email']}\n";
+                }
+            }
+        }   
+    }
+
 
     // Function to prompt for missing db options
     function promptForOption($option, $prompt) {
@@ -168,8 +238,8 @@
             } else {
                 echo "Connection failed";
             }
+            return $sqlconnection;
         }
-
         catch (Exception $e)
         {
             echo $e;
@@ -207,7 +277,7 @@
             promptForOption($option, $prompt);
         }
             $db_details = parse_ini_file(DB_DETAILS_FILE);
-            connectToSql($db_details);
+            $connection = connectToSql($db_details);
     }
 
     echo "Do you wish to continue? (yes/no): ";
