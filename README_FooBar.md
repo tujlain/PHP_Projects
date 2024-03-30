@@ -8,7 +8,7 @@ This PHP script is designed to output numbers from 1 to 100, with specific condi
 
 ## Requirements
 
-1. PHP 7.0 or higher
+1. PHP 8.0 or higher
 
 ## Installation
 
