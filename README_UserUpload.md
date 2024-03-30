@@ -51,6 +51,7 @@ php user_upload.php -p "password"
 php user_upload.php -h "host"
 php user_upload.php --sqlport="portnumber"
 ```
+![sql commands](https://github.com/tujlain/PHP_Projects/blob/main/assets/sql_commands.png)
 
 ### Create Table Command
 The predefined database 'tarudb', will be created if it does not exist.
@@ -59,6 +60,7 @@ This command creates the 'users' table in the database if it does not exist.
 ```
 php user_upload.php --create_table
 ```
+![create table command](https://github.com/tujlain/PHP_Projects/blob/main/assets/createtable_command.png)
 
 ### File Run Command
 This command reads the specified CSV file, processes the file data, and updates the database based on the processed data. 
@@ -71,6 +73,7 @@ Additionally, it returns the status of the inserted rows.
 ```
 php user_upload.php --file=filename
 ```
+![file command](https://github.com/tujlain/PHP_Projects/blob/main/assets/file_command.png)
 
 ### Dry Run Command
 This command will read the file, process the file data and simulate running the script without altering the database.
@@ -81,3 +84,4 @@ It is always used in conjuction with the --file directive
 ```
 php user_upload.php --file=filename --dry_run
 ```
+![dry run command](https://github.com/tujlain/PHP_Projects/blob/main/assets/dryrun_command.png)
