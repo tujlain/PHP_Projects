@@ -1,12 +1,13 @@
 <?php
     define('DB_DETAILS_FILE', getcwd() . '\db_details.txt');
-    $command_options_to_prompt = getopt("u:p:h:", ["file:", "create_table", "dry_run", "help"]);
+    $command_options_to_prompt = getopt("u:p:h:port:", ["file:", "create_table", "dry_run", "help"]);
 
     // Array of database options to prompt for
     $db_command_options_to_prompt = [
         'u' => 'MySQL username',
         'p' => 'MySQL password',
         'h' => 'MySQL host',
+        'port' => 'MySQL Port'
     ];
 
     function validateEmail($email) {
@@ -161,9 +162,9 @@
 
 
         // Function to establish the database connection
-        function connectToDatabase($host, $username, $password, $database) {
+        function connectToDatabase($host, $username, $password, $database, $port) {
             // Create connection
-            $dbconnection = new mysqli($host, $username, $password);
+            $dbconnection = new mysqli($host, $username, $password,'',$port);
 
             // Check connection
             if ($dbconnection->connect_error) {
@@ -182,7 +183,7 @@
             $dbconnection->close();
 
             // Reconnect with the specified database
-            $conn = new mysqli($host, $username, $password, $database);
+            $conn = new mysqli($host, $username, $password, $database,$port);
 
             // Check connection
             if ($conn->connect_error) {
@@ -197,6 +198,7 @@
         $username = $db_details['u'];
         $password = $db_details['p'];
         $host = $db_details['h'];
+        $port = $db_details['port'];
         $database = "tarudb";
         $sql = " CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -206,7 +208,7 @@
             )";
 
         try{
-            $sqlconnection = connectToDatabase($host, $username, $password, $database);
+            $sqlconnection = connectToDatabase($host, $username, $password, $database,$port);
             if ($sqlconnection instanceof mysqli) {
                 echo "Connected successfully to database: $database\n";
 
@@ -232,14 +234,15 @@
     while (True){
 
     if (isset($command_options_to_prompt['help'])) {
-        echo "Usage: php user_upload.php [--file=filename] [--create_table] [--dry_run] [-u username] [-p password] [-h host] [--help]\n";
+        echo "Usage: php user_upload.php \n";
         echo "Options:\n";
         echo "  --file=filename   Specify the CSV file to be parsed\n";
-        echo "  --create_table    Build the MySQL users table and exit\n";
+        echo "  --file=filename --create_table    Build the MySQL users table and exit\n";
         echo "  --dry_run         Run the script without altering the database\n";
         echo "  -u                MySQL username\n";
         echo "  -p                MySQL password\n";
         echo "  -h                MySQL host\n";
+        echo "  -port             MySQL port\n"; 
         echo "  --help            Display this help message\n";
         exit(0);
     }
