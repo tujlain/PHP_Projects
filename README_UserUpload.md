@@ -70,9 +70,8 @@ Returns processed data with specified validations and formatting. For Eg: Capita
 Additionally, it returns the status of the inserted rows.
 ```
 php user_upload.php --file=filename
-
-![file command](https://github.com/tujlain/PHP_Projects/blob/main/assets/file_command.png)
 ```
+![file command](https://github.com/tujlain/PHP_Projects/blob/main/assets/file_command.png)
 
 ### Dry Run Command
 This command will read the file, process the file data and simulate running the script without altering the database.
