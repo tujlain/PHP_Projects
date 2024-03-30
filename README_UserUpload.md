@@ -30,6 +30,7 @@ These commands set the username, password and host of the MySQL database.
 php user_upload.php -u "username"
 php user_upload.php -p "password"
 php user_upload.php -h "host"
+php user_upload.php -port "port number"
 ```
 
 ### Create Table Command
