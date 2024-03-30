@@ -1,4 +1,0 @@
-u=root
-p=mysql
-h=localhost
-port=3306

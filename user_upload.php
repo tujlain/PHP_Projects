@@ -1,13 +1,13 @@
 <?php
     define('DB_DETAILS_FILE', getcwd() . '\db_details.txt');
-    $command_options_to_prompt = getopt("u:p:h:port:", ["file:", "create_table", "dry_run", "help"]);
+    $command_options_to_prompt = getopt("u:p:h:", ["file:", "create_table", "dry_run", "help","sqlport:"]);
 
     // Array of database options to prompt for
     $db_command_options_to_prompt = [
         'u' => 'MySQL username',
         'p' => 'MySQL password',
         'h' => 'MySQL host',
-        'port' => 'MySQL Port'
+        'sqlport' => 'MySQL Port'
     ];
 
     function validateEmail($email) {
@@ -164,6 +164,7 @@
         // Function to establish the database connection
         function connectToDatabase($host, $username, $password, $database, $port) {
             // Create connection
+            try{
             $dbconnection = new mysqli($host, $username, $password,'',$port);
 
             // Check connection
@@ -189,8 +190,15 @@
             if ($conn->connect_error) {
                 die("Connection failed: " . $conn->connect_error);
             }
+            
+             return $conn;
+        }
+        catch (Exception $e)
+        {
+            echo $e;
+            exit;
+        }
 
-            return $conn;
         }
 
     function connectToSql($db_details)
@@ -198,7 +206,7 @@
         $username = $db_details['u'];
         $password = $db_details['p'];
         $host = $db_details['h'];
-        $port = $db_details['port'];
+        $port = $db_details['sqlport'];
         $database = "tarudb";
         $sql = " CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -236,20 +244,21 @@
     if (isset($command_options_to_prompt['help'])) {
         echo "Usage: php user_upload.php \n";
         echo "Options:\n";
-        echo "  --file=filename   Specify the CSV file to be parsed\n";
-        echo "  --file=filename --create_table    Build the MySQL users table and exit\n";
-        echo "  --dry_run         Run the script without altering the database\n";
-        echo "  -u                MySQL username\n";
-        echo "  -p                MySQL password\n";
-        echo "  -h                MySQL host\n";
-        echo "  -port             MySQL port\n"; 
-        echo "  --help            Display this help message\n";
+        echo "  --file=filename             Specify the CSV file to be parsed\n";
+        echo "  --create_table              Build the MySQL users table and exit\n";
+        echo "  --file=filename --dry_run   Run the script without altering the database\n";
+        echo "  -u                          MySQL username\n";
+        echo "  -p                          MySQL password\n";
+        echo "  -h                          MySQL host\n";
+        echo "  --sqlport=portnumber        MySQL port\n"; 
+        echo "  --help                      Display this help message\n";
         exit(0);
     }
 
     // Check if database options are set through command-line arguments
     foreach ($db_command_options_to_prompt as $option => $prompt) {
         if (isset($command_options_to_prompt[$option])) {
+            echo $option;
             // Set the option value directly from command-line argument
             // Save the entered option to a file
             echo $command_options_to_prompt[$option];             
@@ -304,7 +313,6 @@
     if (isset($command_options_to_prompt['create_table'])) {
         checkDbValuesAndConnect($db_command_options_to_prompt);
     }
-
     exit;
 
 } // While loop closing
