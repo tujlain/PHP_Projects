@@ -12,9 +12,9 @@ This PHP script is designed to parse a CSV file and insert its data after proces
 2. The user running the script has necessary permissions to create tables and insert data into the MySQL database.
 3. For the `--dry_run` option, the script assumes that a valid filename is provided using the `--file` directive.
 4. The CSV file provided for processing follows a specific format, with headers for each column (e.g., name, surname, email).
-5. The DB details will be saved into the db_details.txt file, useful for operations throughout the script.
+5. The DB configuration details will be saved into the db_details.txt file, useful for operations throughout the script.
 6. MySQL not always is running on port 3306, hence the script has the command `--sqlport="portnumber"` to get the port number.
-7. The DB details can be requested for via two methods:
+7. The DB configuration details can be requested for via two methods:
 
    a. Via individual command directives as given below under the Usage Guidelines [MySQL Connection Command]
    
