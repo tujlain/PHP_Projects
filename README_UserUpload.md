@@ -85,3 +85,7 @@ It is always used in conjuction with the --file directive
 php user_upload.php --file=filename --dry_run
 ```
 ![dry run command](https://github.com/tujlain/PHP_Projects/blob/main/assets/dryrun_command.png)
+
+## Sample Output
+![user upload output](https://github.com/tujlain/PHP_Projects/blob/main/assets/user_upload_output.png)
+
