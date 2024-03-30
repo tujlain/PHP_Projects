@@ -34,14 +34,29 @@ php user_upload.php -h "host"
 
 ### Create Table Command
 The predefined database 'tarudb', will be created if it does not exist.
+
 This command creates the 'users' table in the database if it does not exist.
 ```
 php user_upload.php --create_table
 ```
 
-### Dry Run Command
-This command will process the file data and simulate running the script without altering the database.
+### File Run Command
+This command reads the specified CSV file, processes the file data, and updates the database based on the processed data. 
+
+Rows with errors are skipped during processing.
+
 Returns processed data with specified validations and formatting. For Eg: Capitalizing names, validating emails, trimming extra spaces etc.
+
+Additionally, it returns the status of the inserted rows.
+```
+php user_upload.php --file=filename
+```
+
+### Dry Run Command
+This command will read the file, process the file data and simulate running the script without altering the database.
+
+Returns processed data with specified validations and formatting. For Eg: Capitalizing names, validating emails, trimming extra spaces etc.
+
 It is always used in conjuction with the --file directive
 ```
 php user_upload.php --file=filename --dry_run
