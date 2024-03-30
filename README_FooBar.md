@@ -10,6 +10,12 @@ This PHP script is designed to output numbers from 1 to 100, with specific condi
 
 1. PHP 7.0 or higher
 
+## Installation
+
+1. Clone this repository to your local machine.
+2. Ensure you have PHP set up.
+3. Run the script via command line using the provided usage instructions.
+   
 ## Usage
 ```
 php foobar.php
