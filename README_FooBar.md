@@ -20,3 +20,6 @@ This PHP script is designed to output numbers from 1 to 100, with specific condi
 ```
 php foobar.php
 ```
+
+## Output Example
+![foobar output](https://github.com/tujlain/PHP_Projects/blob/main/assets/foobar_output.png)
