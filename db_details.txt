@@ -1,3 +1,0 @@
-u=root
-p=mysql
-h=localhost

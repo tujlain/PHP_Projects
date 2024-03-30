@@ -1,5 +1,4 @@
 <?php
-
     define('DB_DETAILS_FILE', getcwd() . '\db_details.txt');
     $command_options_to_prompt = getopt("u:p:h:", ["file:", "create_table", "dry_run", "help"]);
 
@@ -89,13 +88,6 @@
                 // Prepare the statement
                 $sql_statement = $connection->prepare($sql);
                 $sql_statement->bind_param("sss", $data['name'], $data['surname'], $data['email']);
-
-
-            //     if ($sql_statement->execute()) {
-            //         echo "Record inserted successfully for user {$data['email']}\n";
-            //     } else {
-            //         echo "Error: Database insertion failed for user {$data['email']}. Error: " . $sql_statement->error . "\n";
-            // }
                     if ($sql_statement->execute()) {
                         printf("| %-15s| %-25s|\n", "Inserted", str_pad($data['email'], 20));
                     } else {
@@ -222,7 +214,7 @@
 
                 // Execute the query to create/update table
                 if ($sqlconnection->query($sql) === TRUE) {
-                    echo "Table created.\n";
+                    echo "Users Table created.\n";
                 } else {
                     echo "Error creating table: " . $sqlconnection->error;
                 }
@@ -307,7 +299,7 @@
 
     // Prompt for creating table
     if (isset($command_options_to_prompt['create_table'])) {
-        checkDbValuesAndConnect($command_options_to_prompt);
+        checkDbValuesAndConnect($db_command_options_to_prompt);
     }
 
     exit;

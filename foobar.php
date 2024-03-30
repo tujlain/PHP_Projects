@@ -1,5 +1,7 @@
 <?php
 
+$output =''; 
+
 // Loop through numbers from 1-100
 for ($i = 1; $i <= 100; $i++) {
     // Construct output string
@@ -17,7 +19,6 @@ for ($i = 1; $i <= 100; $i++) {
     if ($i % 10 == 0) {
         $output .= "\n";
     }
-
 }
 
 echo $output;
