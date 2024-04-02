@@ -272,7 +272,8 @@ while (True) {
     // To update the file info into the users table
     // Prompt for --file
     if (isset($command_options_to_prompt['file'])) {
-        $file_path = getcwd() . '\\' . $command_options_to_prompt['file'];
+        // $file_path = getcwd() . '\\' . $command_options_to_prompt['file'];
+        $file_path = getcwd() . DIRECTORY_SEPARATOR . $command_options_to_prompt['file'];
         if (file_exists($file_path)) {
             // Read the file
             try {
